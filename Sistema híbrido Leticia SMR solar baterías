@@ -1,0 +1,57 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Datos de demanda proporcionados
+demanda_data = {
+    'Hora': list(range(24)),
+    'kWh': [
+        4950, 4500, 4250, 4100, 4050, 3950, 4040, 4800, 5500, 5950, 6000, 
+        6050, 5950, 5960, 6100, 6100, 6000, 6000, 6200, 6100, 6000, 5950, 
+        5500, 5000
+    ]
+}
+
+# Creación del DataFrame de la demanda
+df_demanda = pd.DataFrame(demanda_data)
+
+# Curva de generación solar con distribución de tipo campana de Gauss
+sigma_pv = 2.5
+horas = df_demanda['Hora']
+curva_generacion_solar = 7000 * np.exp(-((horas-12)**2) / (2*sigma_pv**2))
+curva_generacion_solar[(horas < 6) | (horas > 18)] = 0
+
+# Datos de generación del SMR actualizados proporcionados
+smr_updated_data = {
+    'Hora': horas,
+    'kWh': [
+        4950, 4500, 4250, 4100, 4050, 3700, 3700, 3500, 2500,
+        1900, 1900, 1800, 1800, 1800, 2600, 3200, 4300,
+        5200, 5900, 6100, 6000, 5950, 5500, 5000
+    ]
+}
+
+# Creación del DataFrame del SMR actualizado
+df_smr_updated = pd.DataFrame(smr_updated_data)
+
+# Calculamos la curva de la batería
+curva_bateria = df_demanda['kWh'] - (curva_generacion_solar + df_smr_updated['kWh'])
+
+# Graficar todas las curvas
+plt.figure(figsize=(12, 6))
+plt.plot(df_demanda['Hora'], df_demanda['kWh'], marker='o', linestyle='-', color='green', label='Demanda')
+plt.plot(df_smr_updated['Hora'], df_smr_updated['kWh'], linestyle='-', color='red', label='Generación SMR Actualizada')
+plt.plot(horas, curva_generacion_solar, linestyle='--', color='orange', label='Generación Solar (7000 kW)')
+plt.plot(horas, curva_bateria, linestyle=':', color='purple', label='Balance Baterías')
+plt.title('Curva de Demanda, Generación y Balance de Baterías en Leticia, Colombia')
+plt.xlabel('Hora del día')
+plt.ylabel('Energía (kWh)')
+plt.grid(True)
+plt.xticks(range(0, 24, 1))
+plt.yticks(range(-8000, 8001, 1000))
+plt.ylim(-8000, 8000)
+plt.legend()
+plt.tight_layout()
+
+# Mostrar la gráfica
+plt.show()
